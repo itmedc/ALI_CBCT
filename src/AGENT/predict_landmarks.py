@@ -133,6 +133,17 @@ def main(args):
     # environement_lst = [environement_lst[0]]
     # agent_lst = [agent_lst[0]]
 
+    available_landmarks = set(brain_lst.keys())
+    missing = [a.target for a in agent_lst if a.target not in available_landmarks]
+    if missing:
+        print(f"{GV.bcolors.WARNING}WARNING: No models found for landmarks: {missing}. "
+              f"Available landmarks: {sorted(available_landmarks)}. Skipping missing ones.{GV.bcolors.ENDC}")
+        agent_lst = [a for a in agent_lst if a.target in available_landmarks]
+
+    if not agent_lst:
+        print(f"{GV.bcolors.FAIL}ERROR: No agents left after filtering. Exiting.{GV.bcolors.ENDC}")
+        return
+
     trainsitionLayerSize = 1024
 
 
