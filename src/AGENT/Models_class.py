@@ -6,8 +6,6 @@ import datetime
 import os
 
 import torchvision
-from torchsummary import summary
-
 from torch.utils.tensorboard import SummaryWriter
 
 from torch import nn
