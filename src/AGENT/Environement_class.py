@@ -66,7 +66,7 @@ class Environement :
             data = {"path":path}
             img = sitk.ReadImage(path)
             img_ar = sitk.GetArrayFromImage(img)
-            data["image"] = torch.from_numpy(self.transform(img_ar)).type(torch.int16)
+            data["image"] = torch.as_tensor(self.transform(img_ar)).type(torch.int16)
 
             data["spacing"] = np.array(img.GetSpacing())
             origin = img.GetOrigin()

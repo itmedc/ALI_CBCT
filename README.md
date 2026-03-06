@@ -1,122 +1,176 @@
 # Automatic Landmark Identification in 3D Cone-Beam Computed Tomography scans
 
 Authors:
-Maxime Gillot
-Baptiste Baquero
-Antonio Ruellas
-Marcela Gurgel
-Najla Al Turkestani
-Elizabeth Biggs
-Marilia Yatabe
-Jonas Bianchi
-Lucia Cevidanes
-Juan Carlos Prieto
+Maxime Gillot,
+Baptiste Baquero,
+Antonio Ruellas,
+Marcela Gurgel,
+Najla Al Turkestani,
+Elizabeth Biggs,
+Marilia Yatabe,
+Jonas Bianchi,
+Lucia Cevidanes,
+Juan Carlos Prieto,
+Andrey Zvyagin
 
 We propose a novel approach that reformulates landmark detection as a classification problem through a virtual agent placed inside a 3D Cone-Beam Computed Tomography (CBCT) scan. This agent is trained to navigate in a multi-scale volumetric space to reach the estimated landmark position.
+
+> This is a **modernized fork** of [Maxlo24/ALI_CBCT](https://github.com/Maxlo24/ALI_CBCT), updated to work with current versions of PyTorch, MONAI, and Python.
 
 Landmark placed in the CBCT:
 ![LM_SELECTION_Trans](https://user-images.githubusercontent.com/46842010/159336503-827d70d5-2212-4dea-8ccc-46fc420be2e2.png)
 
-
-
-Scripts for Automatic Landmark Identification in CBCT
-
 ## Prerequisites
 
-python 3.8.8 with the anaconda environment "ALI_environment.yml":
+Python >= 3.10
 
-**Main librairies:**
+**Main libraries:**
 
-> monai==0.7.0 \
-> torch==1.10.1 \
-> itk==5.2.1 \
-> numpy==1.20.1 \
-> simpleitk==2.1.1
+| Package   | Version |
+| --------- | ------- |
+| torch     | >= 2.0  |
+| monai     | >= 1.0  |
+| itk       | >= 5.3  |
+| SimpleITK | >= 2.2  |
+| numpy     | >= 1.24 |
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Optional (for training only)
+
+```bash
+pip install tensorboard seaborn matplotlib
+```
+
+## Changes from the original repository
+
+| Problem (original code)                             | Fix                                                                   |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| `AddChannel` removed in MONAI >= 1.4                | Replaced with `lambda data: data[None]`                               |
+| `torch.from_numpy()` fails on MONAI `MetaTensor`    | Replaced with `torch.as_tensor()`                                     |
+| `from monai.transforms import transform`            | Removed (unused internal API)                                         |
+| `from scipy.sparse.construct import random`         | Removed (deleted in scipy >= 1.12, was unused)                        |
+| `torch.load()` without `weights_only`               | Added `weights_only=False` for PyTorch >= 2.0                         |
+| `from torch.utils.tensorboard import SummaryWriter` | Lazy import via `try/except` (not needed for inference)               |
+| `import torchsummary`                               | Removed (unused)                                                      |
+| `import seaborn` / `matplotlib` at module level     | Moved to lazy import inside `PlotResults()`                           |
+| Various unused imports                              | Removed (`sys`, `csv`, `copy`, `copyfile`, `datetime`, `torchvision`) |
 
 # Running the code
 
 ## Using Docker
-You can get the ALI CBCT docker image by running the folowing command lines.
 
-**Informations**
-- A ***test scan*** "MG_scan_test.nii.gz" is provided in the Data folder of the ALI_CBCT repositorie.
-- If the prediction with the ***GPU is not working***, make sure you installed the NVIDIA Container Toolkit : 
-https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
+**Build the image:**
 
-**Building using the DockerFile**
-
-From the DockerFile directory:
-```
-docker pull dcbia/alicbct:latest
+```bash
+docker build -t alicbct:local -f Dockerfile.local .
 ```
 
-From the DockerFile directory:
+**Download pre-trained models** from the [original releases](https://github.com/Maxlo24/ALI_CBCT/releases/tag/v0.1-models) and unzip them into a single folder.
 
-```
-docker build -t alicbct .
-```
+Available model packs:
 
-**Automatic landmark identification**
-*Running on CPU*
+| Archive                 | Landmarks                                         |
+| ----------------------- | ------------------------------------------------- |
+| `Cranial_Base.zip`      | Ba, S, N, RPo, LPo, RFZyg, LFZyg, C2, C3, C4      |
+| `Upper_Bones.zip`       | RCo, RGo, PogL, LGo, LCo, LAF, LAE, RAF, RAE, ... |
+| `Lower_Bones_1.zip`     | RCo, RGo, PogL, LGo, LCo, ...                     |
+| `Lower_Bones_2.zip`     | Me, Gn, Pog, B, RMeF, LMeF                        |
+| `Upper_Left_Teeth.zip`  | UL3O, UL6MB, UL6DB, ...                           |
+| `Upper_Right_Teeth.zip` | UR3R, UR1R, UR3O, ...                             |
+| `Lower_Left_Teeth.zip`  | LL6MB, LL6DB, LL3R, ...                           |
+| `Lower_Right_Teeth.zip` | LR7R, LR5R, LR4R, ...                             |
 
-```
-docker run --rm --shm-size=5gb -v <Folder_with_the_scans_to_segment>:/app/data/scans -v <Folder_with_the_models_to_use>:/app/data/models  alicbct:latest python3 /app/ALI_CBCT/predict_landmarks.py
-```
-*Running on GPU*
-```
-docker run --rm --shm-size=5gb --gpus all -v <Folder_with_the_scans_to_segment>:/app/data/scans -v <Folder_with_the_models_to_use>:/app/data/models  alicbct:latest python3 /app/ALI_CBCT/predict_landmarks.py
-```
+### Input format
 
-**options/arguments**
-- By default, only *Ba* and *S* landmarks are selected.
-    To choose which structure to segment, you can use the following arguments:
-    ```
-    -lm Ba S
-    ```
-    <!-- To deactivate the merging step, you can use the following argument:
-    ```
-    -m False
-    ``` -->
+Scans must be in **NIfTI** (`.nii`, `.nii.gz`), **NRRD** (`.nrrd`), or **GIPL** (`.gipl`) format.
 
-___
+If you have DICOM files, convert them first:
 
+```python
+import SimpleITK as sitk
 
-
-
-
-**Pre-process**
-
-To run the preprocess to prepare the files and set them at the wanted spacing for the training:
-
-For the Upper, Lower and Cranial base landmarks
-```
-python3 init_training_data_ULCB.py -i "path of the input folder with the scans and the fiducial list" -o "path of the output folder"
+reader = sitk.ImageSeriesReader()
+reader.SetFileNames(reader.GetGDCMSeriesFileNames("/path/to/dicom/folder"))
+image = reader.Execute()
+sitk.WriteImage(image, "output_scan.nii.gz")
 ```
 
-For the canine impaction landmarks
-```
-python3 init_training_data_Canine.py -i "path of the input folder with the scans and the fiducial list" -o "path of the output folder"
+### Run prediction
+
+**On CPU:**
+
+```bash
+docker run --rm --shm-size=5gb \
+  -v /path/to/scans:/app/data/scans \
+  -v /path/to/models:/app/data/models \
+  alicbct:local python3 /app/ALI_CBCT/predict_landmarks.py
 ```
 
+**On GPU:**
 
-By default the spacing is set at 1 and 0.3 but we can change and add other spacing with the argument :
+```bash
+docker run --rm --shm-size=5gb --gpus all \
+  -v /path/to/scans:/app/data/scans \
+  -v /path/to/models:/app/data/models \
+  alicbct:local python3 /app/ALI_CBCT/predict_landmarks.py
 ```
--sp x.xx x.xx
-````
-A contrast adjustment is also applied but can be turned off with 
+
+> If GPU is not working, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker) installed.
+
+### Arguments
+
+| Argument              | Default            | Description                         |
+| --------------------- | ------------------ | ----------------------------------- |
+| `-lm` / `--landmarks` | `Ba S`             | Landmarks to identify               |
+| `-sp` / `--spacing`   | `1 0.3`            | Spacing for multi-scale environment |
+| `--dir_scans`         | `/app/data/scans`  | Directory with input scans          |
+| `--dir_models`        | `/app/data/models` | Directory with model weights        |
+
+Example — find Ba, S, and N landmarks:
+
+```bash
+docker run --rm --shm-size=5gb \
+  -v /path/to/scans:/app/data/scans \
+  -v /path/to/models:/app/data/models \
+  alicbct:local python3 /app/ALI_CBCT/predict_landmarks.py -lm Ba S N
 ```
--ch False
-````
+
+### Output
+
+Results are saved as `.mrk.json` files (3D Slicer Markups format) in the same directory as the input scans.
+
 ---
 
+## Pre-processing (for training)
 
+For Upper, Lower and Cranial base landmarks:
 
+```bash
+python3 init_training_data_ULCB.py -i "input_folder" -o "output_folder"
+```
 
-#Images
+For canine impaction landmarks:
+
+```bash
+python3 init_training_data_Canine.py -i "input_folder" -o "output_folder"
+```
+
+Options:
+
+- `-sp x.xx x.xx` — custom spacing (default: 1 and 0.3)
+- `-ch False` — disable contrast adjustment
+
+---
+
+## Architecture
 
 Environment, low resolution and high resolution:
 ![2environement_label_zoom](https://user-images.githubusercontent.com/46842010/159337231-0e79e134-a027-4987-ab44-edc2ad54d244.png)
-
 
 Agent architecture:
 ![agent_label](https://user-images.githubusercontent.com/46842010/159341624-5d17e5a3-c4b7-4b93-bd7d-0b1348c7ad31.png)
