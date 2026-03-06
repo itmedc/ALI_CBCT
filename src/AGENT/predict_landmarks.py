@@ -10,9 +10,6 @@
 
 from utils import*
 import glob
-import sys
-from shutil import copyfile
-
 
 import time
 
@@ -26,7 +23,6 @@ from resnet2p1d import *
 
 import numpy as np
 import os
-import argparse
 import shutil
 
 def main(args):

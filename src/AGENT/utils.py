@@ -8,11 +8,6 @@ import torch
 import json
 
 import GlobalVar as GV
-# from skimage import exposure
-
-
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 
 def GetAgentLst(agents_param, lm_lst):
@@ -603,10 +598,9 @@ def ResultDiscretAccuracy(env_lst,sp):
 
 
 def PlotResults(data):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
     sns.set_theme(style="whitegrid")
-    # data = {"labels":["B","B","N","N","B","N"], "error":[0.1,0.5,1.6,1.9,0.3,1.3]}    
-
-    # print(tips)
     ax = sns.violinplot(x="labels", y="error", data=data, cut=0)
     plt.show()
 

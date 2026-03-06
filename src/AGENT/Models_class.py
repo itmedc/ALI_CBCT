@@ -2,11 +2,12 @@
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-import datetime
 import os
 
-import torchvision
-from torch.utils.tensorboard import SummaryWriter
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    SummaryWriter = None
 
 from torch import nn
 from tqdm.std import tqdm
