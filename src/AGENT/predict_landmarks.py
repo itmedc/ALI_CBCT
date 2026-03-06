@@ -66,7 +66,7 @@ def main(args):
 
         for sp in scale_spacing:
             new_name = ""
-            spac = str(sp).replace(".","-")
+            spac = str(int(sp)) if sp == int(sp) else str(sp).replace(".","-")
             for i,element in enumerate(scan_name):
                 if i == 0:
                     new_name = scan_name[0] + "_scan_sp" + spac
@@ -94,7 +94,7 @@ def main(args):
     # batch_size = args.batch_size # Batch size for the training
     # dataset_size = args.dataset_size # Size of the dataset to generate for the training
 
-    GV.SCALE_KEYS = [str(scale).replace('.','-') for scale in scale_spacing]
+    GV.SCALE_KEYS = [str(int(scale)) if scale == int(scale) else str(scale).replace('.','-') for scale in scale_spacing]
 
     # environments_param = {
     #     "type" : Environement,

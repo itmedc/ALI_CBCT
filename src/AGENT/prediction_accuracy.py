@@ -39,7 +39,7 @@ def main(args):
     # batch_size = args.batch_size # Batch size for the training
     # dataset_size = args.dataset_size # Size of the dataset to generate for the training
 
-    GV.SCALE_KEYS = [str(scale).replace('.','-') for scale in scale_spacing]
+    GV.SCALE_KEYS = [str(int(scale)) if scale == int(scale) else str(scale).replace('.','-') for scale in scale_spacing]
 
     environments_param = {
         "type" : Environement,
