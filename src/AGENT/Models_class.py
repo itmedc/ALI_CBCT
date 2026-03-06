@@ -264,7 +264,10 @@ class Brain:
 
         for n,net in enumerate(self.networks):
             print("Loading model", model_lst[self.network_scales[n]])
-            net.load_state_dict(torch.load(model_lst[self.network_scales[n]],map_location=self.device))
+            load_kwargs = {"map_location": self.device}
+            if int(torch.__version__.split(".")[0]) >= 2:
+                load_kwargs["weights_only"] = False
+            net.load_state_dict(torch.load(model_lst[self.network_scales[n]], **load_kwargs))
 
 # #####################################
 #  Networks

@@ -21,8 +21,6 @@ import GlobalVar as GV
 from Environement_class import (Environement)
 from Agents_class import (Agent)
 from Models_class import (Brain,DNet,RNet)
-from TrainingManager_class import (TrainingMaster)
-
 import argparse
 from resnet2p1d import *
 

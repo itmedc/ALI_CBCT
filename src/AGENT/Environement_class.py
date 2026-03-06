@@ -14,9 +14,7 @@ import copy
 # from monai.losses import DiceCELoss
 # from monai.inferers import sliding_window_inference
 from monai.transforms import (
-    transform,
     Compose,
-    AddChannel,
     ScaleIntensity,
     SpatialCrop,
     BorderPad,
@@ -55,7 +53,8 @@ class Environement :
         self.padding = padding.astype(np.int16)
         self.device = device
         self.verbose = verbose
-        self.transform = Compose([AddChannel(),BorderPad(spatial_border=self.padding.tolist())])
+        add_channel = lambda data: data[None]
+        self.transform = Compose([add_channel, BorderPad(spatial_border=self.padding.tolist())])
         # self.transform = Compose([AddChannel(),BorderPad(spatial_border=self.padding.tolist()),ScaleIntensity(minv = -1.0, maxv = 1.0, factor = None)])
 
         self.scale_nbr = 0

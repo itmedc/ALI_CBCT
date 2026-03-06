@@ -1,7 +1,6 @@
 from collections import deque
 
 import numpy as np
-from scipy.sparse.construct import random
 
 import torch
 import torch.optim as optim
