@@ -1,5 +1,7 @@
 # Automatic Landmark Identification in 3D Cone-Beam Computed Tomography scans
 
+![Version](https://img.shields.io/badge/version-1.0.0--beta.3-blue)
+
 Authors:
 Maxime Gillot,
 Baptiste Baquero,
