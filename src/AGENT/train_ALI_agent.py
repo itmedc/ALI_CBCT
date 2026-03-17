@@ -63,7 +63,7 @@ def main(args):
 
     agent_lst = GetAgentLst(agents_param, GV.LABELS_TO_TRAIN)
 
-    # environment_lst, agent_lst = GetTrainingEnvironementsAgents(environments_param,agents_param)
+    # environment_lst, agent_lst = GetTrainingEnvironmentsAgents(environments_param,agents_param)
 
     trainsitionLayerSize = 1024
 

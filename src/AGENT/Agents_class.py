@@ -40,7 +40,7 @@ class Agent :
         self.focus_radius = focus_radius
         self.target = targeted_landmark
         self.scale_keys = scale_keys
-        self.environment = environement
+        self.environment = environment
         self.scale_state = 0
         self.start_pos_radius = start_pos_radius
         self.start_position = np.array([0,0,0], dtype=np.int16)

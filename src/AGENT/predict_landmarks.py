@@ -3,7 +3,7 @@
 #     GetEnvironmentLst,
 #     PlotAgentPath,
 #     GetBrain,
-#     ReslutAccuracy,
+#     ResultAccuracy,
 #     ResultDiscretAccuracy,
 #     PlotResults
 # )
@@ -96,7 +96,7 @@ def main(args):
     GV.SCALE_KEYS = [str(int(scale)) if scale == int(scale) else str(scale).replace('.','-') for scale in scale_spacing]
 
     # environments_param = {
-    #     "type" : Environement,
+    #     "type" : Environment,
     #     "dir" : args.dir_scans,
     #     "scale_spacing" : scale_spacing,
     #     "padding" : np.array(agent_FOV)/2 + 1,
@@ -106,9 +106,9 @@ def main(args):
 
 
     environment_lst = GenEnvironmentLst(patient_dic = patients,env_type = Environment, padding =  np.array(agent_FOV)/2 + 1, device = GV.DEVICE)
-    # environement_lst = GetEnvironmentLst(environments_param)
+    # environment_lst = GetEnvironmentLst(environments_param)
 
-    # environement_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
+    # environment_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
 
     # return
 
@@ -129,7 +129,7 @@ def main(args):
     # agent_lst = GetAgentLst(agents_param)
     brain_lst = GetBrain(args.dir_models)
     # print( brain_lst)
-    # environement_lst = [environement_lst[0]]
+    # environment_lst = [environment_lst[0]]
     # agent_lst = [agent_lst[0]]
 
     available_landmarks = set(brain_lst.keys())
@@ -195,7 +195,7 @@ def main(args):
             print("Error: %s : %s" % (temp_fold, e.strerror))
 
 
-    # data_discret_result = ResultDiscretAccuracy(environement_lst,args.spacing[-1])
+    # data_discret_result = ResultDiscretAccuracy(environment_lst,args.spacing[-1])
     # PlotResults(data_discret_result)
 
 

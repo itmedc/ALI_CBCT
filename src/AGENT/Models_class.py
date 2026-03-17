@@ -61,10 +61,13 @@ class Brain:
 
         self.network_scales = network_scales
         self.stuck_patience = stuck_patience
+        is_training = (model_dir != "")
         self._can_compile = (
-            int(torch.__version__.split(".")[0]) >= 2
+            is_training
+            and int(torch.__version__.split(".")[0]) >= 2
             and self.device.type == "cuda"
         )
+        self._compile_failed = False
         stuck_counters = []
 
         for n,scale in enumerate(network_scales):
@@ -73,8 +76,7 @@ class Brain:
                 out_channels = out_channels,
             )
             net.to(self.device)
-            if self._can_compile:
-                net = torch.compile(net)
+            net = self._try_compile(net)
             networks.append(net)
 
             # num_param = sum(p.numel() for p in net.parameters())
@@ -126,14 +128,23 @@ class Brain:
         self.stuck_counters = stuck_counters
 
 
+    def _try_compile(self, net):
+        if not self._can_compile or self._compile_failed:
+            return net
+        try:
+            return torch.compile(net)
+        except Exception as e:
+            print(f"torch.compile failed ({e}), falling back to eager mode")
+            self._compile_failed = True
+            return net
+
     def ResetNet(self,n):
         net = self.network_type(
             in_channels = self.in_channels,
             out_channels = self.out_channels,
         )
         net.to(self.device)
-        if self._can_compile:
-            net = torch.compile(net)
+        net = self._try_compile(net)
         self.networks[n] = net
         opt = optim.Adam(net.parameters(), lr=self.learning_rate)
         self.optimizers[n] = opt
@@ -300,8 +311,7 @@ class Brain:
             if int(torch.__version__.split(".")[0]) >= 2:
                 load_kwargs["weights_only"] = False
             net.load_state_dict(torch.load(model_lst[self.network_scales[n]], **load_kwargs))
-            if self._can_compile:
-                self.networks[n] = torch.compile(net)
+            self.networks[n] = self._try_compile(net)
 
 # #####################################
 #  Networks

@@ -34,7 +34,7 @@ def GetAgentLst(agents_param, lm_lst):
 
 
 # environments_param = {
-#     "type" : Environement,
+#     "type" : Environment,
 #     "dir" : args.dir_scans,
 #     "scale_spacing" : scale_spacing,
 #     "padding" : agent_FOV,
@@ -425,10 +425,10 @@ def GetSphereMaskCoord(h,w,l,center,rad):
 
 def PlotAgentPath(agent,rad = 2):
     paths = agent.position_mem
-    environement = agent.environement
+    environment = agent.environment
 
     for dim,path in enumerate(paths):
-        refImg = environement.images_path[dim]
+        refImg = environment.images_path[dim]
         ref_size,ref_spacing,ref_origin,ref_direction = GetImageInfo(refImg)
         image_3D = CreateNewImageFromRef(refImg)
         for coord in path :
@@ -439,7 +439,7 @@ def PlotAgentPath(agent,rad = 2):
             for i in range(0,len(maskCoord[0])):
                 image_3D.SetPixel([maskCoord[0][i],maskCoord[1][i],maskCoord[2][i]],1)
 
-        maskCoord = GetSphereMaskCoord(ref_size[0],ref_size[1],ref_size[2],environement.GetLandmarkPos(dim,agent.target),rad*2)
+        maskCoord = GetSphereMaskCoord(ref_size[0],ref_size[1],ref_size[2],environment.GetLandmarkPos(dim,agent.target),rad*2)
         maskCoord=maskCoord.tolist()
 
         for i in range(0,len(maskCoord[0])):
