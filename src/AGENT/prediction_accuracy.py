@@ -19,11 +19,9 @@ from Models_class import (Brain,DNet,RNet)
 from TrainingManager_class import (TrainingMaster)
 
 import argparse
-from resnet2p1d import *
 
 import numpy as np
 import os
-import argparse
 
 def main(args):
 
@@ -66,7 +64,7 @@ def main(args):
         "verbose" : True
     }
 
-    agent_lst = GetAgentLst(agents_param)
+    agent_lst = GetAgentLst(agents_param, args.landmarks)
 
 
     # agent_lst = GetAgentLst(agents_param)

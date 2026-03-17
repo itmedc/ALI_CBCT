@@ -16,7 +16,6 @@ from Models_class import (Brain,DNet,RNet)
 from TrainingManager_class import (TrainingMaster)
 
 import argparse
-from resnet2p1d import *
 
 import numpy as np
 import os

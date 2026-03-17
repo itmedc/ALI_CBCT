@@ -1,7 +1,5 @@
 # Automatic Landmark Identification in 3D Cone-Beam Computed Tomography scans
 
-![Version](https://img.shields.io/badge/version-1.0.1--beta.1-blue)
-
 Authors:
 Maxime Gillot,
 Baptiste Baquero,
@@ -28,13 +26,14 @@ Python >= 3.10
 
 **Main libraries:**
 
-| Package   | Version |
-| --------- | ------- |
-| torch     | >= 2.0  |
-| monai     | >= 1.0  |
-| itk       | >= 5.3  |
-| SimpleITK | >= 2.2  |
-| numpy     | >= 1.24 |
+| Package      | Version |
+| ------------ | ------- |
+| torch        | >= 2.0  |
+| monai        | >= 1.0  |
+| itk          | >= 5.3  |
+| SimpleITK    | >= 2.2  |
+| numpy        | >= 1.24 |
+| scikit-learn | any     |
 
 Install dependencies:
 
@@ -48,19 +47,51 @@ pip install -r requirements.txt
 pip install tensorboard seaborn matplotlib
 ```
 
+## Project structure
+
+```
+src/
+  AGENT/
+    predict_landmarks.py   — inference script
+    train_ALI_agent.py     — training script
+    Init_training_data.py  — data preparation
+    Models_class.py        — Brain, DNet, RNet, DN
+    Agents_class.py        — Agent navigation logic
+    Environement_class.py  — 3D environment wrapper
+    TrainingManager_class.py — training loop orchestrator
+    GlobalVar.py           — landmark groups, movements, config
+    utils.py               — I/O, resampling, metrics
+    resnet2p1d.py          — R(2+1)D ResNet backbone
+Docker/
+    Dockerfile             — Docker image definition
+requirements.txt
+```
+
 ## Changes from the original repository
 
-| Problem (original code)                             | Fix                                                                   |
-| --------------------------------------------------- | --------------------------------------------------------------------- |
-| `AddChannel` removed in MONAI >= 1.4                | Replaced with `lambda data: data[None]`                               |
-| `torch.from_numpy()` fails on MONAI `MetaTensor`    | Replaced with `torch.as_tensor()`                                     |
-| `from monai.transforms import transform`            | Removed (unused internal API)                                         |
-| `from scipy.sparse.construct import random`         | Removed (deleted in scipy >= 1.12, was unused)                        |
-| `torch.load()` without `weights_only`               | Added `weights_only=False` for PyTorch >= 2.0                         |
-| `from torch.utils.tensorboard import SummaryWriter` | Lazy import via `try/except` (not needed for inference)               |
-| `import torchsummary`                               | Removed (unused)                                                      |
-| `import seaborn` / `matplotlib` at module level     | Moved to lazy import inside `PlotResults()`                           |
-| Various unused imports                              | Removed (`sys`, `csv`, `copy`, `copyfile`, `datetime`, `torchvision`) |
+| Problem (original code)                             | Fix                                                              |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| `AddChannel` removed in MONAI >= 1.4                | Replaced with `lambda data: data[None]`                          |
+| `torch.from_numpy()` fails on MONAI `MetaTensor`    | Replaced with `torch.as_tensor()`                                |
+| `from monai.transforms import transform`            | Removed (unused internal API)                                    |
+| `from scipy.sparse.construct import random`         | Removed (deleted in scipy >= 1.12, was unused)                   |
+| `torch.load()` without `weights_only`               | Added `weights_only=False` for PyTorch >= 2.0                    |
+| `from torch.utils.tensorboard import SummaryWriter` | Lazy import via `try/except` (not needed for inference)          |
+| ReLU on output layer before CrossEntropyLoss        | Removed — CE expects raw logits                                  |
+| Boundary check `new_pos.all() > 0`                  | Fixed to `(new_pos > 0).all()`                                   |
+| Network reset on float `==` loss match              | Replaced with patience-based mechanism (`stuck_patience=10`)     |
+| No regularization in FC head (4 layers)             | Added `Dropout(0.3)` after first two ReLU layers                 |
+| Fixed learning rate for all epochs                  | Added `ReduceLROnPlateau` scheduler                              |
+| Weak augmentations (only intensity shift)           | Added Gaussian noise, contrast jitter, random 3D flips           |
+| DataLoader without shuffle                          | Added `shuffle=True` for training data                           |
+| No mixed precision                                  | Added AMP (`autocast` + `GradScaler`) with auto-detection        |
+| DataLoader recreates workers each epoch             | Added `persistent_workers=True`, `pin_memory=True`               |
+| PyTorch 1.11 in Docker                              | Updated to PyTorch 2.2 + CUDA 12.1, added `torch.compile()`      |
+| `type=bool` for CLI flag                            | Fixed `--clear_temp` / `--no_clear_temp` with `store_true/false` |
+| Wildcard `from resnet2p1d import *`                 | Explicit `from resnet2p1d import generate_model`                 |
+| `f.close` without parentheses                       | Fixed to `f.close()`                                             |
+
+---
 
 # Running the code
 
@@ -69,7 +100,7 @@ pip install tensorboard seaborn matplotlib
 **Build the image:**
 
 ```bash
-docker build -t alicbct:local -f Dockerfile.local .
+docker build -t alicbct:local -f Docker/Dockerfile .
 ```
 
 **Download pre-trained models** from the [original releases](https://github.com/Maxlo24/ALI_CBCT/releases/tag/v0.1-models) and unzip them into a single folder.
@@ -79,8 +110,8 @@ Available model packs:
 | Archive                 | Landmarks                                         |
 | ----------------------- | ------------------------------------------------- |
 | `Cranial_Base.zip`      | Ba, S, N, RPo, LPo, RFZyg, LFZyg, C2, C3, C4      |
-| `Upper_Bones.zip`       | RCo, RGo, PogL, LGo, LCo, LAF, LAE, RAF, RAE, ... |
-| `Lower_Bones_1.zip`     | RCo, RGo, PogL, LGo, LCo, ...                     |
+| `Upper_Bones.zip`       | RInfOr, LInfOr, RPF, LPF, PNS, ANS, A, ...        |
+| `Lower_Bones_1.zip`     | RCo, RGo, PogL, LGo, LCo, LAF, LAE, RAF, RAE, ... |
 | `Lower_Bones_2.zip`     | Me, Gn, Pog, B, RMeF, LMeF                        |
 | `Upper_Left_Teeth.zip`  | UL3O, UL6MB, UL6DB, ...                           |
 | `Upper_Right_Teeth.zip` | UR3R, UR1R, UR3O, ...                             |
@@ -124,14 +155,20 @@ docker run --rm --shm-size=5gb --gpus all \
 
 > If GPU is not working, make sure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker) installed.
 
-### Arguments
+### Prediction arguments
 
-| Argument              | Default            | Description                         |
-| --------------------- | ------------------ | ----------------------------------- |
-| `-lm` / `--landmarks` | `Ba S`             | Landmarks to identify               |
-| `-sp` / `--spacing`   | `1 0.3`            | Spacing for multi-scale environment |
-| `--dir_scans`         | `/app/data/scans`  | Directory with input scans          |
-| `--dir_models`        | `/app/data/models` | Directory with model weights        |
+| Argument                     | Default             | Description                             |
+| ---------------------------- | ------------------- | --------------------------------------- |
+| `-lm` / `--landmarks`        | `Ba S`              | Landmarks to identify                   |
+| `-sp` / `--spacing`          | `1 0.3`             | Spacing for multi-scale environment     |
+| `-sps` / `--speed_per_scale` | `1 1`               | Agent speed at each scale               |
+| `-sr` / `--spawn_radius`     | `10`                | Spawning radius around landmark         |
+| `-fr` / `--focus_radius`     | `4`                 | Focus refinement radius                 |
+| `-fov` / `--agent_FOV`       | `64 64 64`          | Agent field of view (crop size)         |
+| `--dir_scans`                | `/app/data/scans`   | Directory with input scans              |
+| `--dir_models`               | `/app/data/models`  | Directory with model weights            |
+| `--dir_temp`                 | `..`                | Temporary directory for resampled scans |
+| `--no_clear_temp`            | (clears by default) | Keep temp files after prediction        |
 
 Example — find Ba, S, and N landmarks:
 
@@ -148,24 +185,42 @@ Results are saved as `.mrk.json` files (3D Slicer Markups format) in the same di
 
 ---
 
-## Pre-processing (for training)
+## Training
 
-For Upper, Lower and Cranial base landmarks:
+### Data preparation
 
-```bash
-python3 init_training_data_ULCB.py -i "input_folder" -o "output_folder"
-```
-
-For canine impaction landmarks:
+Use `Init_training_data.py` to resample scans and convert landmarks to the expected format:
 
 ```bash
-python3 init_training_data_Canine.py -i "input_folder" -o "output_folder"
+python3 src/AGENT/Init_training_data.py \
+  --dir "path/to/patient_data" \
+  --spacing 1 0.3
 ```
 
-Options:
+### Run training
 
-- `-sp x.xx x.xx` — custom spacing (default: 1 and 0.3)
-- `-ch False` — disable contrast adjustment
+```bash
+python3 src/AGENT/train_ALI_agent.py \
+  --dir_scans path/to/prepared_data/Patients \
+  --dir_model path/to/output_models
+```
+
+### Training arguments
+
+| Argument                    | Default    | Description                                  |
+| --------------------------- | ---------- | -------------------------------------------- |
+| `--dir_scans`               | (required) | Prepared patient scans directory             |
+| `--dir_model`               | auto       | Output directory for trained models          |
+| `-sp` / `--scale_spacing`   | `0.3 0.08` | Spacing per scale                            |
+| `-ts` / `--training_scales` | `0 1`      | Which scales to train                        |
+| `-fov` / `--agent_FOV`      | `64 64 64` | Agent field of view                          |
+| `-bs` / `--batch_size`      | `150`      | Batch size                                   |
+| `-ds` / `--dataset_size`    | `12000`    | Generated dataset size per epoch             |
+| `-mi` / `--max_epoch`       | `1000`     | Maximum training epochs                      |
+| `-lr` / `--learning_rate`   | `1e-4`     | Initial learning rate (decays via scheduler) |
+| `-vf` / `--val_freq`        | `1`        | Validation frequency                         |
+| `-tp` / `--test_percentage` | `15`       | Percentage of data for validation            |
+| `-nw` / `--nbr_worker`      | `5`        | Number of DataLoader workers                 |
 
 ---
 

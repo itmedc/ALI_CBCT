@@ -15,7 +15,7 @@ from tqdm.std import tqdm
 from monai.networks.nets.densenet import (
     DenseNet
 )
-from resnet2p1d import *
+from resnet2p1d import generate_model
 
 import GlobalVar as GV
 
@@ -61,6 +61,10 @@ class Brain:
 
         self.network_scales = network_scales
         self.stuck_patience = stuck_patience
+        self._can_compile = (
+            int(torch.__version__.split(".")[0]) >= 2
+            and self.device.type == "cuda"
+        )
         stuck_counters = []
 
         for n,scale in enumerate(network_scales):
@@ -69,6 +73,8 @@ class Brain:
                 out_channels = out_channels,
             )
             net.to(self.device)
+            if self._can_compile:
+                net = torch.compile(net)
             networks.append(net)
 
             # num_param = sum(p.numel() for p in net.parameters())
@@ -101,6 +107,8 @@ class Brain:
 
 
         self.loss_fn = nn.CrossEntropyLoss()
+        self.use_amp = (self.device.type == "cuda")
+        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
         self.optimizers = optimizers
         self.schedulers = schedulers
         self.writers = writers
@@ -124,6 +132,8 @@ class Brain:
             out_channels = self.out_channels,
         )
         net.to(self.device)
+        if self._can_compile:
+            net = torch.compile(net)
         self.networks[n] = net
         opt = optim.Adam(net.parameters(), lr=self.learning_rate)
         self.optimizers[n] = opt
@@ -131,6 +141,7 @@ class Brain:
             opt, mode='max', factor=0.5, patience=10
         )
 
+        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
         self.epoch_losses[n] = [0]
         self.validation_metrics[n] = []
         self.best_metrics[n] = 0
@@ -142,7 +153,7 @@ class Brain:
     def Predict(self,dim,state):
         network = self.networks[dim]
         network.eval()
-        with torch.no_grad():
+        with torch.no_grad(), torch.cuda.amp.autocast(enabled=self.use_amp):
             input = torch.unsqueeze(state,0).type(torch.float32).to(self.device)
             x = network(input)
         return torch.argmax(x)
@@ -167,17 +178,16 @@ class Brain:
         for step, batch in enumerate(epoch_iterator):
             # print(batch["state"].size(),batch["target"].size())
             # print(torch.min(batch["state"]),torch.max(batch["state"]) , batch["state"].type())
-            input,target = batch["state"].type(torch.float32).to(self.device),batch["target"].to(self.device)
-            
-            
-            # img_grid = torchvision.utils.make_grid(batch["state"])
-            # self.writer.add_image('Crop of network '+str(n)+' at epoch ' + str(self.global_epoch[n]),img_grid)
+            input = batch["state"].type(torch.float32).to(self.device, non_blocking=True)
+            target = batch["target"].to(self.device, non_blocking=True)
             
             optimizer.zero_grad()
-            y = network(input)
-            loss = self.loss_fn(y,target)
-            loss.backward()
-            optimizer.step()
+            with torch.cuda.amp.autocast(enabled=self.use_amp):
+                y = network(input)
+                loss = self.loss_fn(y,target)
+            self.scaler.scale(loss).backward()
+            self.scaler.step(optimizer)
+            self.scaler.update()
             epoch_loss +=loss.item()
             for i in range(self.batch_size):
                 if torch.eq(torch.argmax(y[i]),target[i]):
@@ -231,9 +241,11 @@ class Brain:
                 
                 # print(batch["state"].size(),batch["target"].size())
                 # print(torch.min(batch["state"]),torch.max(batch["state"]))
-                input,target = batch["state"].type(torch.float32).to(self.device),batch["target"].to(self.device)
-                y = network(input)
-                loss = self.loss_fn(y,target)
+                input = batch["state"].type(torch.float32).to(self.device, non_blocking=True)
+                target = batch["target"].to(self.device, non_blocking=True)
+                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                    y = network(input)
+                    loss = self.loss_fn(y,target)
 
                 for i in range(self.batch_size):
                     if torch.eq(torch.argmax(y[i]),target[i]):
@@ -288,6 +300,8 @@ class Brain:
             if int(torch.__version__.split(".")[0]) >= 2:
                 load_kwargs["weights_only"] = False
             net.load_state_dict(torch.load(model_lst[self.network_scales[n]], **load_kwargs))
+            if self._can_compile:
+                self.networks[n] = torch.compile(net)
 
 # #####################################
 #  Networks

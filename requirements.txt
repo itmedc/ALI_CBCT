@@ -1,11 +1,13 @@
-# Core inference dependencies
+# Core dependencies
+torch>=2.0
 monai>=1.0
 itk>=5.3
 SimpleITK>=2.2
 numpy>=1.24
 tqdm
 
-# Training-only (optional, imported lazily)
+# Training-only
+scikit-learn
 # tensorboard
 # seaborn
 # matplotlib

@@ -1,7 +1,5 @@
 
 import torch
-from torch._C import dtype
-from torch.utils import data
 
 from Environement_class import Environement
 
@@ -19,6 +17,9 @@ import time
 
 from monai.transforms import(
     RandShiftIntensityd,
+    RandGaussianNoised,
+    RandAdjustContrastd,
+    RandFlipd,
     Compose,
     ScaleIntensityd
 )
@@ -70,8 +71,12 @@ class TrainingMaster :
 
         self.pos_dataset = data_dic
 
-        # self.data_transform = Compose([ScaleIntensityd(keys=["state"],minv = 0.0, maxv = 1.0,factor = None),RandShiftIntensityd(keys=["state"],offsets=0.10,prob=0.50,)])
-        self.data_transform = RandShiftIntensityd(keys=["state"],offsets=0.10,prob=0.50)
+        self.data_transform = Compose([
+            RandShiftIntensityd(keys=["state"], offsets=0.10, prob=0.50),
+            RandGaussianNoised(keys=["state"], prob=0.15, std=0.05),
+            RandAdjustContrastd(keys=["state"], prob=0.15, gamma=(0.8, 1.2)),
+            RandFlipd(keys=["state"], prob=0.3, spatial_axis=[0, 1, 2]),
+        ])
 
         self.num_worker = num_worker
         self.batch_size = batch_size
@@ -166,7 +171,14 @@ class TrainingMaster :
             # cache_rate=1.0,
             # num_workers=self.num_worker,
         )
-        train_loader = DataLoader(train_ds, batch_size=self.batch_size, num_workers=self.num_worker)
+        train_loader = DataLoader(
+            train_ds,
+            batch_size=self.batch_size,
+            shuffle=(key == "train"),
+            num_workers=self.num_worker,
+            persistent_workers=(self.num_worker > 0),
+            pin_memory=True,
+        )
         return train_loader,dataset
         
     # TOOLS

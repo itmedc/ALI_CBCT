@@ -486,8 +486,6 @@ def SaveJsonFromFcsv(file_path,out_path):
 
 def GenControlePoint(groupe_data):
     lm_lst = []
-    false = False
-    true = True
     id = 0
     for landmark,data in groupe_data.items():
         id+=1
@@ -498,9 +496,9 @@ def GenControlePoint(groupe_data):
             "associatedNodeID": "",
             "position": [data["x"], data["y"], data["z"]],
             "orientation": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
-            "selected": true,
-            "locked": true,
-            "visibility": true,
+            "selected": True,
+            "locked": True,
+            "visibility": True,
             "positionStatus": "preview"
         }
         lm_lst.append(controle_point)
@@ -508,34 +506,31 @@ def GenControlePoint(groupe_data):
     return lm_lst
 
 def WriteJson(lm_lst,out_path):
-    false = False
-    true = True
     file = {
     "@schema": "https://raw.githubusercontent.com/slicer/slicer/master/Modules/Loadable/Markups/Resources/Schema/markups-schema-v1.0.0.json#",
     "markups": [
         {
             "type": "Fiducial",
             "coordinateSystem": "LPS",
-            "locked": false,
+            "locked": False,
             "labelFormat": "%N-%d",
             "controlPoints": lm_lst,
             "measurements": [],
             "display": {
-                "visibility": false,
+                "visibility": False,
                 "opacity": 1.0,
-                "color": [0.4, 1.0, 0.0],
                 "color": [0.5, 0.5, 0.5],
                 "selectedColor": [0.26666666666666669, 0.6745098039215687, 0.39215686274509806],
-                "propertiesLabelVisibility": false,
-                "pointLabelsVisibility": true,
+                "propertiesLabelVisibility": False,
+                "pointLabelsVisibility": True,
                 "textScale": 2.0,
                 "glyphType": "Sphere3D",
                 "glyphScale": 2.0,
                 "glyphSize": 5.0,
-                "useGlyphScale": true,
-                "sliceProjection": false,
-                "sliceProjectionUseFiducialColor": true,
-                "sliceProjectionOutlinedBehindSlicePlane": false,
+                "useGlyphScale": True,
+                "sliceProjection": False,
+                "sliceProjectionUseFiducialColor": True,
+                "sliceProjectionOutlinedBehindSlicePlane": False,
                 "sliceProjectionColor": [1.0, 1.0, 1.0],
                 "sliceProjectionOpacity": 0.6,
                 "lineThickness": 0.2,
@@ -543,7 +538,7 @@ def WriteJson(lm_lst,out_path):
                 "lineColorFadingEnd": 10.0,
                 "lineColorFadingSaturation": 1.0,
                 "lineColorFadingHueOffset": 0.0,
-                "handlesInteractive": false,
+                "handlesInteractive": False,
                 "snapMode": "toVisibleSurface"
             }
         }
@@ -551,8 +546,6 @@ def WriteJson(lm_lst,out_path):
     }
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(file, f, ensure_ascii=False, indent=4)
-
-    f.close
 
 def  ReslutAccuracy(environments, scale):
 
@@ -667,8 +660,7 @@ def SaveFiducialFromArray(data,scan_image,outpath,label_list):
     f.write("# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID\n")
     for id,element in enumerate(label_pos_lst):
         f.write(str(id)+","+str(element["coord"][0])+","+str(element["coord"][1])+","+str(element["coord"][2])+",0,0,0,1,1,1,0,"+element["label"]+",,\n")
-    # # f.write( data + "\n")
-    f.close
+    f.close()
     
 
 def CheckCrops(Master,agent,dim):

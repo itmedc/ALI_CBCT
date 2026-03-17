@@ -19,7 +19,6 @@ from Environement_class import (Environement)
 from Agents_class import (Agent)
 from Models_class import (Brain,DNet,RNet)
 import argparse
-from resnet2p1d import *
 
 import numpy as np
 import os
@@ -208,7 +207,8 @@ if __name__ ==  '__main__':
     input_group.add_argument('--dir_scans', type=str, help='Input directory with the scans',default='/app/data/scans')
     input_group.add_argument('--dir_models', type=str, help='Directory of the trained models',default= '/app/data/models')
     
-    input_group.add_argument('--clear_temp', type=bool, help='Temp directory',default= True)
+    input_group.add_argument('--clear_temp', action='store_true', default=True, help='Clear temp directory after prediction')
+    input_group.add_argument('--no_clear_temp', dest='clear_temp', action='store_false', help='Keep temp directory after prediction')
     input_group.add_argument('--dir_temp', type=str, help='Temp directory',default= '..')
 
 
