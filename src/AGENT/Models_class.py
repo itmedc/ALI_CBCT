@@ -213,7 +213,7 @@ class Brain:
         if self.verbose:
             print()
             print("Average epoch Loss :",epoch_loss)
-            print("Porcentage of good moves :",metric*100,"%")
+            print("Percentage of good moves :",metric*100,"%")
 
         if self.generate_tensorboard:
             writer = self.writers[n]
@@ -263,7 +263,7 @@ class Brain:
 
             if self.verbose:
                 print()
-                print("Porcentage of good moves :",metric*100,"%")
+                print("Percentage of good moves :",metric*100,"%")
 
             # metric = 1
 

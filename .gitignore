@@ -7,3 +7,6 @@ data/
 convert_dcm.py
 Dockerfile.local
 .gitignore
+
+# Legacy code
+src/old/

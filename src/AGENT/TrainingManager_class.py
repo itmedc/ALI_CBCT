@@ -1,7 +1,7 @@
 
 import torch
 
-from Environement_class import Environement
+from Environment_class import Environment
 
 from collections import deque
 from sklearn.model_selection import train_test_split
@@ -36,7 +36,7 @@ import GlobalVar as GV
 class TrainingMaster :
     def __init__(
         self,
-        environement_lst,
+        environment_lst,
         agent_lst,
         model_dir,
         max_train_memory_size = 100,
@@ -49,7 +49,7 @@ class TrainingMaster :
     ) -> None:
 
         self.model_dir = model_dir
-        self.environements = environement_lst
+        self.environments = environment_lst
         self.env_scales = env_scales
         self.rand_rot = rand_rot
         # self.val_percentage = val_percentage
@@ -87,11 +87,11 @@ class TrainingMaster :
 
     # ENVIRONEMENT MANAGEMENT
 
-    def AddEnvironement(self,env):
-        self.environements.append(env)
+    def AddEnvironment(self,env):
+        self.environments.append(env)
 
-    def ResetEnvironements(self,env_lst = []):
-        self.environements = env_lst
+    def ResetEnvironments(self,env_lst = []):
+        self.environments = env_lst
 
     # AGENT MANAGEMENT
 
@@ -105,7 +105,7 @@ class TrainingMaster :
     # DATA MANAGEMENT
 
     def SplitTrainValData(self,val_percentage = 0.2):
-        train_env, val_env = train_test_split(self.environements, test_size=val_percentage, random_state=len(self.environements))
+        train_env, val_env = train_test_split(self.environments, test_size=val_percentage, random_state=len(self.environments))
         self.s_env = {"train":train_env,"val":val_env}
         for key in self.s_env.keys():
             print(key,"environments :")

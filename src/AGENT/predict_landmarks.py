@@ -15,7 +15,7 @@ import time
 
 import GlobalVar as GV
 
-from Environement_class import (Environement)
+from Environment_class import (Environment)
 from Agents_class import (Agent)
 from Models_class import (Brain,DNet,RNet)
 import argparse
@@ -105,7 +105,7 @@ def main(args):
     # }
 
 
-    environement_lst = GenEnvironmentLst(patient_dic = patients,env_type = Environement, padding =  np.array(agent_FOV)/2 + 1, device = GV.DEVICE)
+    environment_lst = GenEnvironmentLst(patient_dic = patients,env_type = Environment, padding =  np.array(agent_FOV)/2 + 1, device = GV.DEVICE)
     # environement_lst = GetEnvironmentLst(environments_param)
 
     # environement_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
@@ -166,11 +166,11 @@ def main(args):
 
     tot_step = 0
     fails = {}
-    for environment in environement_lst:
+    for environment in environment_lst:
         print(environment.patient_id)
         # print(environment)
         for agent in agent_lst:
-            agent.SetEnvironement(environment)
+            agent.SetEnvironment(environment)
             search_result = agent.Search()
             if search_result == -1:
                 fails[agent.target] = fails.get(agent.target,0) + 1
@@ -186,7 +186,7 @@ def main(args):
         
 
     for lm, nbr in fails.items():
-        print(f"Fails for {lm} : {nbr}/{len(environement_lst)}")
+        print(f"Fails for {lm} : {nbr}/{len(environment_lst)}")
 
     if args.clear_temp:
         try:

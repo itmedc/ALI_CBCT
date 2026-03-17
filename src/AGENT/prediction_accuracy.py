@@ -3,7 +3,7 @@ from utils import (
     GetEnvironmentLst,
     PlotAgentPath,
     GetBrain,
-    ReslutAccuracy,
+    ResultAccuracy,
     ResultDiscretAccuracy,
     PlotResults
 )
@@ -13,7 +13,7 @@ import time
 
 import GlobalVar as GV
 
-from Environement_class import (Environement)
+from Environment_class import (Environment)
 from Agents_class import (Agent)
 from Models_class import (Brain,DNet,RNet)
 from TrainingManager_class import (TrainingMaster)
@@ -40,7 +40,7 @@ def main(args):
     GV.SCALE_KEYS = [str(int(scale)) if scale == int(scale) else str(scale).replace('.','-') for scale in scale_spacing]
 
     environments_param = {
-        "type" : Environement,
+        "type" : Environment,
         "dir" : args.dir_scans,
         "scale_spacing" : scale_spacing,
         "padding" : np.array(agent_FOV)/2 + 1,
@@ -48,9 +48,9 @@ def main(args):
         "verbose" : False,
     }
 
-    environement_lst = GetEnvironmentLst(environments_param)
+    environment_lst = GetEnvironmentLst(environments_param)
 
-    # environement_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
+    # environment_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
 
     # return
 
@@ -70,7 +70,7 @@ def main(args):
     # agent_lst = GetAgentLst(agents_param)
     brain_lst = GetBrain(args.dir_model)
     # print( brain_lst)
-    # environement_lst = [environement_lst[0]]
+    # environment_lst = [environment_lst[0]]
     # agent_lst = [agent_lst[0]]
 
     trainsitionLayerSize = 1024
@@ -103,11 +103,11 @@ def main(args):
     start_time = time.time()
 
     tot_step = 0
-    for environment in environement_lst:
+    for environment in environment_lst:
         print(environment.patient_id)
         # print(environment)
         for agent in agent_lst:
-            agent.SetEnvironement(environment)
+            agent.SetEnvironment(environment)
             tot_step += agent.Search()
             # PlotAgentPath(agent)
         environment.SavePredictedLandmarks(GV.SCALE_KEYS[-1])
@@ -117,17 +117,17 @@ def main(args):
     print('prediction time :' , end_time-start_time)
         
 
-    # for e in environement_lst:
+    # for e in environment_lst:
     #     for key in args.landmarks:
     #         for lm in LABELS[key]:
     #             if e.LandmarkIsPresent(lm):
     #                 e.AddPredictedLandmark(lm,e.GetLandmarkPos(1,lm))
     #                 e.SavePredictedLandmarks()
 
-    data_result = ReslutAccuracy(environement_lst,GV.SCALE_KEYS[-1])
+    data_result = ResultAccuracy(environment_lst,GV.SCALE_KEYS[-1])
     PlotResults(data_result)
 
-    # data_discret_result = ResultDiscretAccuracy(environement_lst,args.spacing[-1])
+    # data_discret_result = ResultDiscretAccuracy(environment_lst,args.spacing[-1])
     # PlotResults(data_discret_result)
 
 

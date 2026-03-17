@@ -57,7 +57,7 @@ src/
     Init_training_data.py  — data preparation
     Models_class.py        — Brain, DNet, RNet, DN
     Agents_class.py        — Agent navigation logic
-    Environement_class.py  — 3D environment wrapper
+    Environment_class.py   — 3D environment wrapper
     TrainingManager_class.py — training loop orchestrator
     GlobalVar.py           — landmark groups, movements, config
     utils.py               — I/O, resampling, metrics

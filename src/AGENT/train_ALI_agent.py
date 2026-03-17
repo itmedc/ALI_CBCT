@@ -10,7 +10,7 @@ import datetime
 
 import GlobalVar as GV
 
-from Environement_class import (Environement)
+from Environment_class import (Environment)
 from Agents_class import (Agent)
 from Models_class import (Brain,DNet,RNet)
 from TrainingManager_class import (TrainingMaster)
@@ -37,7 +37,7 @@ def main(args):
     GV.SCALE_KEYS = [str(int(scale)) if scale == int(scale) else str(scale).replace('.','-') for scale in scale_spacing]
 
     environments_param = {
-        "type" : Environement,
+        "type" : Environment,
         "dir" : args.dir_scans,
         "scale_spacing" : scale_spacing,
         "padding" : np.array(agent_FOV)/2 + 1,
@@ -45,9 +45,9 @@ def main(args):
         "verbose" : False,
     }
 
-    environement_lst = GetEnvironmentLst(environments_param)
+    environment_lst = GetEnvironmentLst(environments_param)
 
-    # environement_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
+    # environment_lst[0].SavePredictedLandmarks(multi_scale_keys[0])
 
     # return
 
@@ -63,7 +63,7 @@ def main(args):
 
     agent_lst = GetAgentLst(agents_param, GV.LABELS_TO_TRAIN)
 
-    # environement_lst, agent_lst = GetTrainingEnvironementsAgents(environments_param,agents_param)
+    # environment_lst, agent_lst = GetTrainingEnvironementsAgents(environments_param,agents_param)
 
     trainsitionLayerSize = 1024
 
@@ -94,7 +94,7 @@ def main(args):
     print('Training on scales : ',training_scales)
 
     Master = TrainingMaster(
-        environement_lst= environement_lst,
+        environment_lst= environment_lst,
         agent_lst = agent_lst, 
         model_dir = args.dir_model,
         max_train_memory_size = dataset_size,
@@ -114,7 +114,7 @@ def main(args):
 
     # agent = agent_lst[0]
     # CheckCrops(Master,agent,1)
-    # e = environement_lst[1]
+    # e = environment_lst[1]
     # e.SetRandomRotation()
     # e.SaveCBCT(0,"/Users/luciacev-admin/Desktop/test/test.nii.gz")
     # print(e.dim_landmarks[0]["Ba"])

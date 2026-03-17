@@ -123,9 +123,9 @@ def GetEnvironmentLst(environments_param):
         raise ValueError(f"{GV.bcolors.FAIL}Error in the dataset folder{GV.bcolors.ENDC}")
 
     print("-- Generating environments --")
-    environement_lst = []
+    environment_lst = []
     for patient,data in patients.items():
-        print(f"{GV.bcolors.OKCYAN}Generating Environement for the patient: {GV.bcolors.OKBLUE}{patient}{GV.bcolors.ENDC}")
+        print(f"{GV.bcolors.OKCYAN}Generating Environment for the patient: {GV.bcolors.OKBLUE}{patient}{GV.bcolors.ENDC}")
         env = environments_param["type"](
             patient_id = patient,
             device = environments_param["device"],
@@ -137,17 +137,17 @@ def GetEnvironmentLst(environments_param):
         env.LoadImages(data["scans"])
         for lm_file in data["landmarks"].values():
             env.LoadJsonLandmarks(lm_file)
-        environement_lst.append(env)
+        environment_lst.append(env)
 
-    print(f"{GV.bcolors.OKGREEN}{len(environement_lst)} environment successfully generated. {GV.bcolors.ENDC}")
+    print(f"{GV.bcolors.OKGREEN}{len(environment_lst)} environment successfully generated. {GV.bcolors.ENDC}")
 
-    return environement_lst
+    return environment_lst
 
     
 def GenEnvironmentLst(patient_dic ,env_type, padding = 1, device = GV.DEVICE):
-    environement_lst = []
+    environment_lst = []
     for patient,data in patient_dic.items():
-        print(f"{GV.bcolors.OKCYAN}Generating Environement for the patient: {GV.bcolors.OKBLUE}{patient}{GV.bcolors.ENDC}")
+        print(f"{GV.bcolors.OKCYAN}Generating Environment for the patient: {GV.bcolors.OKBLUE}{patient}{GV.bcolors.ENDC}")
         env = env_type(
             patient_id = patient,
             device = device,
@@ -155,8 +155,8 @@ def GenEnvironmentLst(patient_dic ,env_type, padding = 1, device = GV.DEVICE):
             verbose = False,
         )
         env.LoadImages(data["scans"])
-        environement_lst.append(env)
-    return environement_lst
+        environment_lst.append(env)
+    return environment_lst
 
 
 
@@ -547,7 +547,7 @@ def WriteJson(lm_lst,out_path):
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(file, f, ensure_ascii=False, indent=4)
 
-def  ReslutAccuracy(environments, scale):
+def  ResultAccuracy(environments, scale):
 
     print(f'{GV.bcolors.OKGREEN}====== RESULTS ======{GV.bcolors.ENDC}')
 
