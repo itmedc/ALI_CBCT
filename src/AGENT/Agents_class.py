@@ -119,7 +119,7 @@ class Agent :
         
     def Move(self, movement_idx):
         new_pos = self.position + self.movement_matrix[movement_idx]*self.speed
-        if new_pos.all() > 0 and (new_pos < self.environement.GetSize(self.scale_keys[self.scale_state])).all():
+        if (new_pos > 0).all() and (new_pos < self.environement.GetSize(self.scale_keys[self.scale_state])).all():
             self.position = new_pos
             # if self.verbose:
             #     print("Moving ", self.movement_id[movement_idx])

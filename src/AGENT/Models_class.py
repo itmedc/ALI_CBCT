@@ -34,7 +34,8 @@ class Brain:
         learning_rate = 1e-4,
         batch_size = 10,
         generate_tensorboard = False,
-        verbose = False
+        verbose = False,
+        stuck_patience = 10,
     ) -> None:
         self.network_type = network_type
         self.in_channels = in_channels
@@ -54,10 +55,13 @@ class Brain:
 
         writers = []
         optimizers = []
+        schedulers = []
         best_metrics = []
         best_epoch = []
 
         self.network_scales = network_scales
+        self.stuck_patience = stuck_patience
+        stuck_counters = []
 
         for n,scale in enumerate(network_scales):
             net = network_type(
@@ -71,12 +75,17 @@ class Brain:
             # print("Number of parameters :",num_param)
             # summary(net,(1,64,64,64))
 
-            optimizers.append(optim.Adam(net.parameters(), lr=learning_rate))
+            opt = optim.Adam(net.parameters(), lr=learning_rate)
+            optimizers.append(opt)
+            schedulers.append(optim.lr_scheduler.ReduceLROnPlateau(
+                opt, mode='max', factor=0.5, patience=10
+            ))
             epoch_losses.append([0])
             validation_metrics.append([])
             best_metrics.append(0)
             global_epoch.append(0)
             best_epoch.append(0)
+            stuck_counters.append(0)
 
             if not model_dir == "":
                 dir_path = os.path.join(model_dir,scale)
@@ -93,6 +102,7 @@ class Brain:
 
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizers = optimizers
+        self.schedulers = schedulers
         self.writers = writers
 
         self.networks = networks
@@ -105,6 +115,7 @@ class Brain:
 
         self.model_dirs = models_dirs
         self.model_name = model_name
+        self.stuck_counters = stuck_counters
 
 
     def ResetNet(self,n):
@@ -114,13 +125,18 @@ class Brain:
         )
         net.to(self.device)
         self.networks[n] = net
-        self.optimizers[n] = optim.Adam(net.parameters(), lr=self.learning_rate)
+        opt = optim.Adam(net.parameters(), lr=self.learning_rate)
+        self.optimizers[n] = opt
+        self.schedulers[n] = optim.lr_scheduler.ReduceLROnPlateau(
+            opt, mode='max', factor=0.5, patience=10
+        )
 
         self.epoch_losses[n] = [0]
         self.validation_metrics[n] = []
         self.best_metrics[n] = 0
         self.global_epoch[n] = 0
         self.best_epoch[n] = 0
+        self.stuck_counters[n] = 0
 
 
     def Predict(self,dim,state):
@@ -173,23 +189,26 @@ class Brain:
         epoch_loss /= step+1
         metric = epoch_good_move/((step+1)*self.batch_size)
         
-        if self.epoch_losses[n][-1] == epoch_loss: #If learning is stuck
-            print()
-            print("Stuck at Loss :",epoch_loss)
-            print("Net reset")
-            self.ResetNet(n)
-        else:
-            self.epoch_losses[n].append(epoch_loss)
-            if self.verbose:
+        if abs(self.epoch_losses[n][-1] - epoch_loss) < 1e-7:
+            self.stuck_counters[n] += 1
+            if self.stuck_counters[n] > self.stuck_patience:
                 print()
-                print("Average epoch Loss :",epoch_loss)
-                print("Porcentage of good moves :",metric*100,"%")
+                print("Stuck at Loss :",epoch_loss,"for",self.stuck_patience,"epochs")
+                print("Net reset")
+                self.ResetNet(n)
+        else:
+            self.stuck_counters[n] = 0
 
-            if self.generate_tensorboard:
-                writer = self.writers[n]
-                # writer.add_scalar("Training loss",epoch_loss,self.global_epoch[n])
-                writer.add_scalar("Training accuracy",metric,self.global_epoch[n])
-                writer.close()
+        self.epoch_losses[n].append(epoch_loss)
+        if self.verbose:
+            print()
+            print("Average epoch Loss :",epoch_loss)
+            print("Porcentage of good moves :",metric*100,"%")
+
+        if self.generate_tensorboard:
+            writer = self.writers[n]
+            writer.add_scalar("Training accuracy",metric,self.global_epoch[n])
+            writer.close()
 
         print("--------------------------------------------------------------------------")
         
@@ -253,6 +272,8 @@ class Brain:
             # writer.add_graph(network,input)
             writer.add_scalar("Validation accuracy",metric,self.global_epoch[n])
             writer.close()
+
+        self.schedulers[n].step(metric)
 
         return metric
 
@@ -334,6 +355,7 @@ class DN(nn.Module):
         self,
         in_channels,
         out_channels: int = 6,
+        dropout: float = 0.3,
     ) -> None:
         super(DN, self).__init__()
 
@@ -341,6 +363,7 @@ class DN(nn.Module):
         self.fc1 = nn.Linear(512, 256)
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, out_channels)
+        self.dropout = nn.Dropout(dropout)
 
         nn.init.xavier_uniform_(self.fc0.weight)
         nn.init.xavier_uniform_(self.fc1.weight)
@@ -349,11 +372,9 @@ class DN(nn.Module):
 
 
     def forward(self,x):
-        x = F.relu(self.fc0(x))
-        x = F.relu(self.fc1(x))
+        x = self.dropout(F.relu(self.fc0(x)))
+        x = self.dropout(F.relu(self.fc1(x)))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        output = x #F.softmax(self.fc3(x), dim=1)
-        return output
+        return self.fc3(x)
 
 
