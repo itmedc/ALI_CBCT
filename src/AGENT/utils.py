@@ -632,7 +632,7 @@ def SaveFiducialFromArray(data,scan_image,outpath,label_list):
 
     print("Generating fiducial file at : ", os.path.basename(scan_image))
     ref_size,ref_spacing,ref_origin,ref_direction = GetImageInfo(scan_image)
-    physical_origin = abs(ref_origin/ref_spacing)
+    physical_origin = -ref_origin / ref_spacing
     print(ref_direction)
 
     # print(physical_origin)

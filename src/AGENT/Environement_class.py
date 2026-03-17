@@ -97,7 +97,7 @@ class Environement :
             lm_ph_coord = np.array([mark_pos[2],mark_pos[1],mark_pos[0]])
             self.available_lm.append(markup["label"])
             for scale,scale_data in self.data.items():
-                lm_coord = ((lm_ph_coord+ abs(scale_data["origin"]))/scale_data["spacing"]).astype(np.int16)
+                lm_coord = ((lm_ph_coord - scale_data["origin"]) / scale_data["spacing"]).astype(np.int16)
                 scale_data["landmarks"][markup["label"]] = lm_coord
 
         # print(test)
@@ -109,7 +109,7 @@ class Environement :
 
         ref_origin = self.data[scale_key]["origin"]
         ref_spacing = self.data[scale_key]["spacing"]
-        physical_origin = abs(ref_origin/ref_spacing)
+        physical_origin = -ref_origin / ref_spacing
 
         # print(ref_origin,ref_spacing,physical_origin)
 
